@@ -1,47 +1,63 @@
 import * as THREE from 'three';
 import { createTextPanel, createCloseButton } from '../scene/panels.js';
 
-// Sets up raycasting-based click interaction for planets and info panels
+
+// Smoothly animate a vector toward a target over time
+function animateVector3(vector, target, duration = 500) {
+    const start = vector.clone();
+    const startTime = performance.now();
+
+    function animate(time) {
+        const elapsed = time - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        vector.lerpVectors(start, target, t);
+
+    }
+
+    requestAnimationFrame(animate);
+}
+let activePanel = null;
+
 export function setupInteraction(scene, camera, planets) {
-    const raycaster = new THREE.Raycaster(); // Detects objects under the mouse pointer
-    const mouse = new THREE.Vector2();       // Stores mouse coordinates in normalized space
-    let activePanel = null;                  // Currently visible information panel
-    let closeButton = null;                  // "X" button to close the panel
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
 
-    // Handles mouse clicks and responds to object interaction
-    function onMouseClick(event) {
-        // Convert screen-space click position to normalized device coordinates
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    let closeButton = null;
+    const originalPositions = {}; // To store original positions for reset
 
-        // Cast a ray from the camera in the direction of the mouse pointer
-        raycaster.setFromCamera(mouse, camera);
+    function onPlanetClick(clickedObject) {
 
-        // Build list of clickable objects (planets + close button if visible)
-        const clickableObjects = Object.values(planets);
-        if (closeButton) clickableObjects.push(closeButton);
+        // Save original position for return
+        if (!originalPositions[clickedObject.uuid]) {
+            originalPositions[clickedObject.uuid] = clickedObject.position.clone();
+        }
 
-        // Find intersections between ray and clickable objects
-        const intersects = raycaster.intersectObjects(clickableObjects);
+        // --- Panel placement ---
+        const cameraDirection = new THREE.Vector3();
+        camera.getWorldDirection(cameraDirection);
+        const distance = 25;
+        const panelCenter = camera.position.clone().add(cameraDirection.clone().multiplyScalar(distance));
 
-        if (intersects.length > 0) {
-            const clickedObject = intersects[0].object;
+        // --- Planet placement ---
+        const cameraRight = new THREE.Vector3();
+        cameraRight.crossVectors(cameraDirection, camera.up).normalize();
 
-            // If the close button was clicked, remove the current panel
-            if (clickedObject === closeButton) {
-                scene.remove(activePanel);
-                activePanel = null;
-                closeButton = null;
-                return;
-            }
+        const closerDistance = distance - 5; // Bring planet 5 units closer than the panel
+        const planetCenter = camera.position.clone().add(cameraDirection.clone().multiplyScalar(closerDistance));
+        const targetPosition = planetCenter.add(cameraRight.multiplyScalar(-7)); // 7 units left of panel
 
-            // Remove any previously displayed panel
-            if (activePanel) {
-                scene.remove(activePanel);
-            }
+        animateVector3(clickedObject.position, targetPosition, 600);
 
-            // Determine content based on which planet was clicked
-            const panelContent = clickedObject === planets.skills
+        // Remove old panel if any
+        if (activePanel) {
+            scene.remove(activePanel);
+            activePanel = null;
+            closeButton = null;
+        }
+
+        // Choose panel content
+        const panelContent =
+            clickedObject === planets.skills
                 ? 'Skills:\nReact\nRedux\nTypeScript\nNode.js\nAEM'
                 : clickedObject === planets.education
                     ? 'Education:\nIntegrated Master\nUniversity of Aegean\n2014-2019'
@@ -51,28 +67,64 @@ export function setupInteraction(scene, camera, planets) {
                             ? 'Certifications:\nAdobe Certified Expert\nBLS'
                             : 'Contact:\nDzaf96@gmail.com\nLinkedIn';
 
-            // Create the panel and place it a fixed distance in front of the camera
-            activePanel = createTextPanel(panelContent);
-            const cameraDirection = new THREE.Vector3();
-            camera.getWorldDirection(cameraDirection);
-            const distance = 25;
+        // Create and place the info panel
+        activePanel = createTextPanel(panelContent);
+        activePanel.position.copy(panelCenter);
+        activePanel.lookAt(camera.position);
 
-            // Move panel in front of the camera by projecting along its forward vector
-            activePanel.position.copy(camera.position).add(cameraDirection.multiplyScalar(distance));
+        // Add close button to panel
+        closeButton = createCloseButton();
+        closeButton.position.set(8, 8, 0);
+        activePanel.add(closeButton);
 
-            // Make the panel face the camera for readability
-            activePanel.lookAt(camera.position);
+        scene.add(activePanel);
+    }
 
-            // Create and position the close button relative to the panel
-            closeButton = createCloseButton();
-            closeButton.position.set(8, 8, 0);
-            activePanel.add(closeButton);
+    // Mouse click handler
+    function onMouseClick(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
 
-            // Add the panel (and button) to the scene
-            scene.add(activePanel);
+        const clickableObjects = Object.values(planets);
+        if (closeButton) clickableObjects.push(closeButton);
+
+        const intersects = raycaster.intersectObjects(clickableObjects);
+
+        if (intersects.length > 0) {
+            const clickedObject = intersects[0].object;
+
+            // Close panel and restore planet
+            if (clickedObject === closeButton) {
+                scene.remove(activePanel);
+                activePanel = null;
+                closeButton = null;
+
+                for (const planet of Object.values(planets)) {
+                    const original = originalPositions[planet.uuid];
+                    if (original) {
+                        animateVector3(planet.position, original, 600);
+                    }
+                }
+                return;
+            }
+
+            onPlanetClick(clickedObject);
         }
     }
 
-    // Register the click listener once during setup
+    // Sidebar interaction
+    window.addEventListener('planet-click', (e) => {
+        const planet = planets[e.detail];
+        if (planet) {
+            onPlanetClick(planet);
+        }
+    });
+
+    // Mouse click
     window.addEventListener('click', onMouseClick);
+}
+
+export function getActivePanel() {
+    return activePanel;
 }

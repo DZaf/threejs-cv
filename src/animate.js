@@ -1,6 +1,12 @@
+import { getActivePanel } from './interaction/onClickHandler.js';
 // Starts the animation loop for rendering, rotating planets, orbiting, and updating labels
 export function animate(scene, camera, renderer, controls, pivots, planets, labels = {}) {
     function loop() {
+
+        const panel = getActivePanel();
+        if (panel) {
+            panel.lookAt(camera.position);
+        }
         // Schedule the next frame
         requestAnimationFrame(loop);
 
@@ -28,6 +34,10 @@ export function animate(scene, camera, renderer, controls, pivots, planets, labe
             if (labels[key]) {
                 labels[key].lookAt(camera.position);
             }
+        }
+
+        if (panel) {
+            panel.lookAt(camera.position);
         }
 
         // Update orbit controls (for smooth camera movement and damping)

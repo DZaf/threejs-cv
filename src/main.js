@@ -6,6 +6,8 @@ import { createLabels } from './scene/labels.js';
 import { setupInteraction } from './interaction/onClickHandler.js';
 import { animate } from './animate.js';
 import './style.css'; // Import global canvas and body styling
+import './sidebar.jsx';
+
 
 // Set up the core scene components: scene, camera, renderer, controls
 const { scene, camera, renderer, controls } = initScene();
@@ -24,7 +26,8 @@ const { planets, pivots } = createPlanets(scene, textureLoader, planetMaterialOp
 // Load labels and continue once font is ready (asynchronous step)
 createLabels(scene, planets, pivots).then(labels => {
     // Set up interaction: clicking planets opens panels
-    setupInteraction(scene, camera, planets);
+    setupInteraction(scene, camera, planets, pivots);
+
 
     // Start rendering loop: animate planet spins, orbits, and labels
     animate(scene, camera, renderer, controls, pivots, planets, labels);
