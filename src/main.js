@@ -1,26 +1,41 @@
+// Import core Three.js modules and additional helpers
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
-import './style.css';
+import './style.css'; // Import the main stylesheet for layout and canvas styling
 
+// Create the scene which will hold all 3D objects
 const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.setZ(80);
+// Setup the perspective camera
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
+camera.position.setZ(80); // Move the camera back so we can view objects
 
+// Setup the WebGL renderer and attach it to the canvas element
 const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#bg') });
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setPixelRatio(window.devicePixelRatio); // Improves clarity on high DPI screens
 renderer.setSize(window.innerWidth, window.innerHeight);
 
+// Enable user interaction with the scene using OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
+controls.enableDamping = true; // Adds smooth motion
 controls.dampingFactor = 0.05;
 
-const sun = new THREE.Mesh(new THREE.SphereGeometry(8, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+// Create a sun object using a sphere geometry and basic yellow material
+const sun = new THREE.Mesh(
+    new THREE.SphereGeometry(8, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0xffff00 })
+);
 sun.position.set(0, 0, 0);
 scene.add(sun);
 
+// Load textures for different planet surfaces
 const textureLoader = new THREE.TextureLoader();
 const venusTexture = textureLoader.load('/textures/venus.jpg');
 const marsTexture = textureLoader.load('/textures/mars.jpg');
@@ -28,40 +43,49 @@ const jupiterTexture = textureLoader.load('/textures/jupiter.jpg');
 const moonTexture = textureLoader.load('/textures/moon.jpg');
 const venusSurfaceTexture = textureLoader.load('/textures/venus_surface.jpg');
 
+// Set a starry background using a texture
 scene.background = textureLoader.load('/textures/stars.jpg');
 
+// Add lighting to the scene
 scene.add(new THREE.PointLight(0xffffff, 1, 100).position.set(20, 20, 20));
-scene.add(new THREE.AmbientLight(0xffffff));
+scene.add(new THREE.AmbientLight(0xffffff)); // Soft overall lighting
 
+// Prepare reusable sphere geometry and material options
 const sphereGeometry = new THREE.SphereGeometry(5, 32, 32);
 const planetMaterialOptions = { roughness: 0.8, metalness: 0.1 };
 
+// Create individual planets for sections of the CV
 const skillsPlanet = new THREE.Mesh(sphereGeometry, new THREE.MeshStandardMaterial({ map: venusTexture, ...planetMaterialOptions }));
 const educationPlanet = new THREE.Mesh(sphereGeometry, new THREE.MeshStandardMaterial({ map: marsTexture, ...planetMaterialOptions }));
 const experiencePlanet = new THREE.Mesh(sphereGeometry, new THREE.MeshStandardMaterial({ map: jupiterTexture, ...planetMaterialOptions }));
 const certificationsPlanet = new THREE.Mesh(sphereGeometry, new THREE.MeshStandardMaterial({ map: moonTexture, ...planetMaterialOptions }));
 const contactPlanet = new THREE.Mesh(sphereGeometry, new THREE.MeshStandardMaterial({ map: venusSurfaceTexture, ...planetMaterialOptions }));
 
+// Create pivot points to control the rotation of each planet
 const skillsPivot = new THREE.Object3D();
 const educationPivot = new THREE.Object3D();
 const experiencePivot = new THREE.Object3D();
 const certificationsPivot = new THREE.Object3D();
 const contactPivot = new THREE.Object3D();
 
+// Add pivots to the scene
 scene.add(skillsPivot, educationPivot, experiencePivot, certificationsPivot, contactPivot);
 
+// Attach each planet to its respective pivot
 skillsPivot.add(skillsPlanet);
 educationPivot.add(educationPlanet);
 experiencePivot.add(experiencePlanet);
 certificationsPivot.add(certificationsPlanet);
 contactPivot.add(contactPlanet);
 
+// Position the planets in space
 skillsPlanet.position.set(20, 0, 0);
 educationPlanet.position.set(30, 0, 0);
 experiencePlanet.position.set(40, 0, 0);
 certificationsPlanet.position.set(50, 0, 0);
 contactPlanet.position.set(60, 0, 0);
 
+// Load a font and create labels for each planet
 let skillsLabel, educationLabel, experienceLabel, certificationsLabel, contactLabel;
 const loader = new FontLoader();
 loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', font => {
@@ -83,12 +107,14 @@ loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json
         return textMesh;
     };
 
+    // Generate labels for each section
     skillsLabel = createLabel('Skills', { x: skillsPlanet.position.x, y: skillsPlanet.position.y + 5, z: skillsPlanet.position.z });
     educationLabel = createLabel('Education', { x: educationPlanet.position.x, y: educationPlanet.position.y + 5, z: educationPlanet.position.z });
     experienceLabel = createLabel('Experience', { x: experiencePlanet.position.x, y: experiencePlanet.position.y + 5, z: experiencePlanet.position.z });
     certificationsLabel = createLabel('Certifications', { x: certificationsPlanet.position.x, y: certificationsPlanet.position.y + 5, z: certificationsPlanet.position.z });
     contactLabel = createLabel('Contact', { x: contactPlanet.position.x, y: contactPlanet.position.y + 5, z: contactPlanet.position.z });
 
+    // Attach labels to pivots
     skillsPivot.add(skillsLabel);
     educationPivot.add(educationLabel);
     experiencePivot.add(experienceLabel);
@@ -96,11 +122,13 @@ loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json
     contactPivot.add(contactLabel);
 });
 
+// Enable raycasting for interactivity
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let activePanel = null;
 let closeButton = null;
 
+// Function to create a text panel that displays information
 function createTextPanel(textContent) {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
@@ -125,6 +153,7 @@ function createTextPanel(textContent) {
     return panelMesh;
 }
 
+// Creates a clickable close button for the info panels
 function createCloseButton() {
     const texture = new THREE.TextureLoader().load('https://cdn-icons-png.flaticon.com/512/1828/1828778.png');
     const buttonGeometry = new THREE.PlaneGeometry(2, 2);
@@ -134,6 +163,7 @@ function createCloseButton() {
     return buttonMesh;
 }
 
+// Handle mouse click events for selecting planets and toggling info panels
 function onMouseClick(event) {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -170,21 +200,25 @@ function onMouseClick(event) {
 
 window.addEventListener('click', onMouseClick);
 
+// Animation loop to rotate planets and keep labels facing the camera
 function animate() {
     requestAnimationFrame(animate);
 
+    // Rotate each planet around its own axis
     skillsPlanet.rotation.y += 0.005;
     educationPlanet.rotation.y += 0.005;
     experiencePlanet.rotation.y += 0.005;
     certificationsPlanet.rotation.y += 0.005;
     contactPlanet.rotation.y += 0.005;
 
+    // Rotate pivot points to orbit the planets
     skillsPivot.rotation.y += 0.01;
     educationPivot.rotation.y += 0.008;
     experiencePivot.rotation.y += 0.006;
     certificationsPivot.rotation.y += 0.004;
     contactPivot.rotation.y += 0.002;
 
+    // Ensure labels always face the camera
     if (skillsLabel) skillsLabel.lookAt(camera.position);
     if (educationLabel) educationLabel.lookAt(camera.position);
     if (experienceLabel) experienceLabel.lookAt(camera.position);
