@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run test && vite build",
     "preview": "vite preview",
-    "deploy": "gh-pages -d .",
+    "deploy": "npm run test && vite build && gh-pages -d dist",
     "test": "jest"
   },
   "keywords": [],
