@@ -1,61 +1,63 @@
 import * as THREE from 'three';
-import { createTextPanel, createCloseButton } from '../scene/panels.js';
+import { createTextPanel, createCloseButton } from '../scene/panels';
 
+let activePanel: THREE.Object3D | null = null;
+let planetMap: Record<string, THREE.Mesh> = {};
 
-// Smoothly animate a vector toward a target over time
-function animateVector3(vector, target, duration = 500) {
+/**
+ * Smoothly animates a vector toward a target over time.
+ */
+function animateVector3(
+    vector: THREE.Vector3,
+    target: THREE.Vector3,
+    duration = 500
+): void {
     const start = vector.clone();
     const startTime = performance.now();
 
-    function animate(time) {
+    function animate(time: number) {
         const elapsed = time - startTime;
         const t = Math.min(elapsed / duration, 1);
         vector.lerpVectors(start, target, t);
 
+        if (t < 1) requestAnimationFrame(animate);
     }
 
     requestAnimationFrame(animate);
 }
-let activePanel = null;
 
-export function setupInteraction(scene, camera, planets) {
+/**
+ * Sets up raycasting and click interaction for selecting planets and panels.
+ */
+export function setupInteraction(
+    scene: THREE.Scene,
+    camera: THREE.Camera,
+    planets: Record<string, THREE.Mesh>
+): void {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
+    planetMap = planets;
 
-    let closeButton = null;
-    const originalPositions = {}; // To store original positions for reset
+    let closeButton: THREE.Mesh | null = null;
+    const originalPositions: Record<string, THREE.Vector3> = {};
 
-    function onPlanetClick(clickedObject) {
-
-        // Save original position for return
-        if (!originalPositions[clickedObject.uuid]) {
-            originalPositions[clickedObject.uuid] = clickedObject.position.clone();
-        }
-
-        // --- Panel placement ---
+    function onPlanetClick(clickedObject: THREE.Mesh): void {
         const cameraDirection = new THREE.Vector3();
         camera.getWorldDirection(cameraDirection);
+
         const distance = 25;
-        const panelCenter = camera.position.clone().add(cameraDirection.clone().multiplyScalar(distance));
+        const panelCenter = camera.position
+            .clone()
+            .add(cameraDirection.clone().multiplyScalar(distance));
 
-        // --- Planet placement ---
-        const cameraRight = new THREE.Vector3();
-        cameraRight.crossVectors(cameraDirection, camera.up).normalize();
-
-        const closerDistance = distance - 5; // Bring planet 5 units closer than the panel
-        const planetCenter = camera.position.clone().add(cameraDirection.clone().multiplyScalar(closerDistance));
-        const targetPosition = planetCenter.add(cameraRight.multiplyScalar(-7)); // 7 units left of panel
-
-        animateVector3(clickedObject.position, targetPosition, 600);
-
-        // Remove old panel if any
+        // Remove existing panel if present
         if (activePanel) {
             scene.remove(activePanel);
             activePanel = null;
             closeButton = null;
         }
 
-        // Choose panel content
+        // Determine content based on clicked object
         const panelContent =
             clickedObject === planets.skills
                 ? 'Skills:\nReact\nRedux\nTypeScript\nNode.js\nAEM'
@@ -67,12 +69,12 @@ export function setupInteraction(scene, camera, planets) {
                             ? 'Certifications:\nAdobe Certified Expert\nBLS'
                             : 'Contact:\nDzaf96@gmail.com\nLinkedIn';
 
-        // Create and place the info panel
+        // Create and position panel
         activePanel = createTextPanel(panelContent);
         activePanel.position.copy(panelCenter);
         activePanel.lookAt(camera.position);
 
-        // Add close button to panel
+        // Add close button
         closeButton = createCloseButton();
         closeButton.position.set(8, 8, 0);
         activePanel.add(closeButton);
@@ -80,13 +82,12 @@ export function setupInteraction(scene, camera, planets) {
         scene.add(activePanel);
     }
 
-    // Mouse click handler
-    function onMouseClick(event) {
+    function onMouseClick(event: MouseEvent): void {
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
 
-        const clickableObjects = Object.values(planets);
+        const clickableObjects: THREE.Object3D[] = Object.values(planets);
         if (closeButton) clickableObjects.push(closeButton);
 
         const intersects = raycaster.intersectObjects(clickableObjects);
@@ -94,9 +95,8 @@ export function setupInteraction(scene, camera, planets) {
         if (intersects.length > 0) {
             const clickedObject = intersects[0].object;
 
-            // Close panel and restore planet
             if (clickedObject === closeButton) {
-                scene.remove(activePanel);
+                scene.remove(activePanel!);
                 activePanel = null;
                 closeButton = null;
 
@@ -109,22 +109,42 @@ export function setupInteraction(scene, camera, planets) {
                 return;
             }
 
-            onPlanetClick(clickedObject);
+            // Store original position for return animation
+            if (!originalPositions[clickedObject.uuid]) {
+                originalPositions[clickedObject.uuid] = clickedObject.position.clone();
+            }
+
+            onPlanetClick(clickedObject as THREE.Mesh);
         }
     }
 
-    // Sidebar interaction
-    window.addEventListener('planet-click', (e) => {
-        const planet = planets[e.detail];
+    // Trigger planet panel via event
+    window.addEventListener('planet-click', (e: Event) => {
+        const detail = (e as CustomEvent).detail;
+        const planet = planets[detail];
         if (planet) {
             onPlanetClick(planet);
         }
     });
 
-    // Mouse click
+    // Main mouse interaction
     window.addEventListener('click', onMouseClick);
 }
 
-export function getActivePanel() {
+/**
+ * Returns the currently active panel, or null if none is shown.
+ */
+export function getActivePanel(): THREE.Object3D | null {
     return activePanel;
+}
+
+/**
+ * Triggers a planet panel via custom event dispatch.
+ */
+export function selectPlanetByName(name: string): void {
+    const planet = planetMap[name];
+    if (planet) {
+        const event = new CustomEvent('planet-click', { detail: name });
+        window.dispatchEvent(event);
+    }
 }
