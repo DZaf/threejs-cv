@@ -59,7 +59,7 @@ three/
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/three-cv.git
+git clone https://github.com/DZaf/threejs-cv.git
 cd three-cv
 
 # Install dependencies
