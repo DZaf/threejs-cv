@@ -1,11 +1,19 @@
 import * as THREE from 'three';
 import { createTextPanel, createCloseButton } from '../scene/panels';
 
+// Reference to the currently displayed panel
 let activePanel: THREE.Object3D | null = null;
+
+// A reference map to track planets by name for easy lookup
 let planetMap: Record<string, THREE.Mesh> = {};
 
 /**
- * Smoothly animates a vector toward a target over time.
+ * Smoothly interpolates a vector's value toward a target over a given duration.
+ * Useful for animating position transitions (e.g., returning planets to original positions).
+ *
+ * @param vector - The vector to animate
+ * @param target - The target vector to animate toward
+ * @param duration - Duration in milliseconds (default: 500ms)
  */
 function animateVector3(
     vector: THREE.Vector3,
@@ -27,7 +35,12 @@ function animateVector3(
 }
 
 /**
- * Sets up raycasting and click interaction for selecting planets and panels.
+ * Sets up interaction logic for clicking on planets and displaying associated panels.
+ * Handles mouse raycasting, panel creation, close button logic, and Redux-triggered selection.
+ *
+ * @param scene - The Three.js scene
+ * @param camera - The active camera used for raycasting
+ * @param planets - A map of planet names to mesh objects
  */
 export function setupInteraction(
     scene: THREE.Scene,
@@ -41,6 +54,10 @@ export function setupInteraction(
     let closeButton: THREE.Mesh | null = null;
     const originalPositions: Record<string, THREE.Vector3> = {};
 
+    /**
+     * Displays a text panel for the clicked planet and positions it facing the camera.
+     * Also adds a close button to the panel.
+     */
     function onPlanetClick(clickedObject: THREE.Mesh): void {
         const cameraDirection = new THREE.Vector3();
         camera.getWorldDirection(cameraDirection);
@@ -50,14 +67,14 @@ export function setupInteraction(
             .clone()
             .add(cameraDirection.clone().multiplyScalar(distance));
 
-        // Remove existing panel if present
+        // Remove any previously displayed panel
         if (activePanel) {
             scene.remove(activePanel);
             activePanel = null;
             closeButton = null;
         }
 
-        // Determine content based on clicked object
+        // Determine panel content based on the clicked planet
         const panelContent =
             clickedObject === planets.skills
                 ? 'Skills:\nReact\nRedux\nTypeScript\nNode.js\nAEM'
@@ -69,12 +86,12 @@ export function setupInteraction(
                             ? 'Certifications:\nAdobe Certified Expert\nBLS'
                             : 'Contact:\nDzaf96@gmail.com\nLinkedIn';
 
-        // Create and position panel
+        // Create the panel mesh and orient it to face the camera
         activePanel = createTextPanel(panelContent);
         activePanel.position.copy(panelCenter);
         activePanel.lookAt(camera.position);
 
-        // Add close button
+        // Create and attach a close button to the panel
         closeButton = createCloseButton();
         closeButton.position.set(8, 8, 0);
         activePanel.add(closeButton);
@@ -82,6 +99,10 @@ export function setupInteraction(
         scene.add(activePanel);
     }
 
+    /**
+     * Handles mouse clicks to trigger raycasting.
+     * Determines if a planet or the close button was clicked.
+     */
     function onMouseClick(event: MouseEvent): void {
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -95,6 +116,7 @@ export function setupInteraction(
         if (intersects.length > 0) {
             const clickedObject = intersects[0].object;
 
+            // If close button clicked, remove the panel and animate planets back
             if (clickedObject === closeButton) {
                 scene.remove(activePanel!);
                 activePanel = null;
@@ -109,7 +131,7 @@ export function setupInteraction(
                 return;
             }
 
-            // Store original position for return animation
+            // Save original position before changing view
             if (!originalPositions[clickedObject.uuid]) {
                 originalPositions[clickedObject.uuid] = clickedObject.position.clone();
             }
@@ -118,7 +140,10 @@ export function setupInteraction(
         }
     }
 
-    // Trigger planet panel via event
+    /**
+     * Listens for custom "planet-click" events to support external interaction
+     * (e.g., selecting a planet via a Redux-connected UI panel).
+     */
     window.addEventListener('planet-click', (e: Event) => {
         const detail = (e as CustomEvent).detail;
         const planet = planets[detail];
@@ -127,19 +152,22 @@ export function setupInteraction(
         }
     });
 
-    // Main mouse interaction
+    // Enable mouse click interaction for planet selection
     window.addEventListener('click', onMouseClick);
 }
 
 /**
- * Returns the currently active panel, or null if none is shown.
+ * Returns the currently active panel mesh, if one exists.
  */
 export function getActivePanel(): THREE.Object3D | null {
     return activePanel;
 }
 
 /**
- * Triggers a planet panel via custom event dispatch.
+ * Triggers a planet panel to open by dispatching a custom event.
+ * Used for external triggers (e.g., clicking a button in the sidebar).
+ *
+ * @param name - The key of the planet to select
  */
 export function selectPlanetByName(name: string): void {
     const planet = planetMap[name];

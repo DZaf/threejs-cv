@@ -1,5 +1,9 @@
 {
     "compilerOptions": {
+        "types": [
+            "jest",
+            "node",
+        ],
         "target": "ES2020",
         "module": "ESNext",
         "moduleResolution": "bundler",
@@ -12,9 +16,11 @@
         "typeRoots": [
             "./node_modules/@types",
             "./src/types"
-        ]
+        ],
+        "jsx": "react-jsx"
     },
     "include": [
-        "src"
+        "src",
+        "src/types"
     ]
 }

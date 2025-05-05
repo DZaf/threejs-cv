@@ -1,32 +1,31 @@
 import * as THREE from 'three';
 
 /**
- * Creates a basic Three.js setup with a scene, camera, and renderer.
- * This function is useful for isolating initialization logic in tests or simple demos.
+ * Initializes and returns a minimal Three.js setup.
+ * Intended for use in testing, experimentation, or component isolation.
  *
- * @returns An object containing the scene, camera, and renderer.
+ * @returns An object containing the scene, a perspective camera, and a WebGL renderer.
  */
 export function createScene(): {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
 } {
-  // Create a new 3D scene — this is the container where objects, lights, and cameras go
+  // Create a new scene to hold all 3D content
   const scene = new THREE.Scene();
 
   // Set up a perspective camera with:
-  // - Field of view: 75 degrees
-  // - Aspect ratio: 1 (square viewport for simplicity in tests)
-  // - Near and far clipping planes: 0.1 and 1000 units respectively
+  // - FOV: 75 degrees
+  // - Aspect ratio: 1 (square viewport for tests)
+  // - Clipping planes: 0.1 (near) to 1000 (far)
   const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 
-  // Create a WebGL renderer — this renders the scene from the camera's point of view
+  // Create a WebGL renderer to render the scene and camera
   const renderer = new THREE.WebGLRenderer();
 
-  // Position the camera slightly away from the origin on the Z-axis
-  // so that it can see objects placed at the center of the scene
+  // Position the camera slightly away from the origin so it can view the scene
   camera.position.z = 5;
 
-  // Return the initialized components for use in the main app or unit tests
+  // Return all core components for rendering
   return { scene, camera, renderer };
 }

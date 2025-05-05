@@ -1,122 +1,113 @@
+
 # 🌌 Three.js Interactive CV
 
-This is a 3D, interactive curriculum vitae built with **Three.js** and modular JavaScript. It creatively presents your background using a space-themed solar system, where each orbiting planet represents a section of your resume.
+An interactive 3D curriculum vitae built with **Three.js**, **React**, and **Redux Toolkit**. This project uses a space-themed visualization where each orbiting planet represents a section of your resume.
 
 ---
 
-## 🚀 Features
+## ✨ Features
 
-- 🧭 **React Sidebar Navigation**  
-  A React-powered sidebar allows users to click on resume sections to trigger the corresponding 3D planet and info panel.
+- 🧭 **Interactive React Sidebar**  
+  Use the sidebar to navigate different sections of your CV.
 
-- 🪐 **Planet-Based Navigation**  
-  Planets represent resume sections: Skills, Education, Experience, Certifications, and Contact.
+- 🪐 **Planet-Based CV Navigation**  
+  Each planet symbolizes a resume section: Skills, Education, Experience, etc.
 
-- 🎯 **Raycast Interactions**  
-  Click planets to open smooth animated panels with detailed content.
+- 🎞️ **Smooth Animations**  
+  Planets orbit and spin, with labels and panels dynamically facing the camera.
 
-- 💫 **Floating Labels**  
-  Labels orbit with planets and always face the camera.
+- 🧮 **Developer Helpers**  
+  Toggle axis and grid helpers for debugging using the sidebar.
 
-- 🎛️ **Animated Transitions**  
-  Clicking a planet brings it (and its label) forward next to the panel.
-
-- 🧲 **Camera Controls**  
-  Rotate, pan, and zoom using `OrbitControls`.
-
-- 🧪 **Unit Tests**  
-  Built-in Jest tests verify 3D scene structure.
-
-- 🧱 **Modular Codebase**  
-  The project is fully split into clean, testable modules (planets, labels, panels, interaction, animation).
-  
-  ---
-
-## 📝 TODO
-
-- 🧩 **Redux Implementation**  
-  Integrate Redux to manage application state, such as selected planet, active panel, and UI synchronization between React and the Three.js scene.
+- 🗂️ **Dynamic Info Panels**  
+  Panels appear near planets when clicked, complete with a close button.
 
 ---
 
-## 🛠 Technologies Used
+## 🧰 Tech Stack
 
-- [Three.js](https://threejs.org/) – 3D engine  
-- [Vite](https://vitejs.dev/) – Build tool  
-- [Jest](https://jestjs.io/) – Testing  
-- [OrbitControls](https://threejs.org/docs/#examples/en/controls/OrbitControls) – User navigation  
-- [TextGeometry](https://threejs.org/docs/#examples/en/geometries/TextGeometry) – Dynamic 3D labels  
-- [CanvasTexture](https://threejs.org/docs/#api/en/textures/CanvasTexture) – Text panel rendering  
+- 🧱 [Three.js](https://threejs.org/) – 3D engine for rendering the scene
+- ⚛️ [React](https://reactjs.org/) – Used for sidebar UI components
+- 🛠️ [Redux Toolkit](https://redux-toolkit.js.org/) – Centralized state management
+- 🧾 [TypeScript](https://www.typescriptlang.org/) – Static typing and IntelliSense
+- ⚡ [Vite](https://vitejs.dev/) – Fast development & build tool
 
 ---
 
-## 📁 Folder Structure
+## 📁 Project Structure
 
 ```
-├── public/
-│   └── textures/              # Background and planet textures
+three/
+├── public/                    # Textures, fonts, and static assets
 ├── src/
-│   ├── main.js                # App entry point
-│   ├── animate.js             # Animation loop
-│   ├── style.css              # Canvas + body styling
-│   ├── interaction/
-│   │   └── onClickHandler.js  # Raycasting + panel logic
-│   └── scene/
-│       ├── initScene.js       # Camera, renderer, controls
-│       ├── addSun.js          # Sun mesh
-│       ├── planets.js         # Creates planets + pivots
-│       ├── labels.js          # Floating text labels
-│       └── panels.js          # Text panel + close button
-├── __tests__/
-│   └── createScene.test.js    # Jest unit tests
-├── index.html                 # Root HTML shell
-├── package.json               # Dependencies & scripts
-└── README.md                  # You're here
+│   ├── scene/                 # Scene logic (sun, planets, labels, panels)
+│   ├── interaction/           # Raycasting and panel interaction
+│   ├── store/                 # Redux store and UI state
+│   ├── sidebar.module.css     # Scoped sidebar styles
+│   ├── sidebar.tsx           # Sidebar React component
+│   ├── main.ts               # App entry point
+│   └── types.d.ts            # Type definitions
+├── index.html                # Main HTML layout
+├── tsconfig.json             # TypeScript configuration
+├── package.json              # Project config and dependencies
+└── README.md
 ```
 
 ---
 
-## 🧪 Testing
-
-Run the unit tests using:
+## 🚀 Getting Started
 
 ```bash
-npm test
-```
+# Clone the repo
+git clone https://github.com/your-username/three-cv.git
+cd three-cv
 
-Includes basic Three.js component tests (`Scene`, `Camera`, `Renderer`) and mocking logic.
-
----
-
-## ▶️ Getting Started
-
-### 1. Install dependencies
-
-```bash
+# Install dependencies
 npm install
 ```
 
-### 2. Start development server
+---
+
+## 💻 Run the App
 
 ```bash
 npm run dev
 ```
 
-### 3. Build for production
+Then open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## 🧪 Run Tests
+
+Basic unit tests are located in the `__tests__/` folder.
 
 ```bash
-npm run build
+npm run test
 ```
+
+---
+
+## 🔮 Roadmap
+
+- 📱 Responsive design
+- 🔧🖼️ Refactor info panels to use React components for richer UI and animation control
 
 ---
 
 ## 📸 Preview
 
-![screenshot of 3D CV](docs/page_screenshot.JPG)
+![screenshot](./docs/page_screenshot.JPG)
 
 ---
 
-## 📬 Author
+## 🤝 Contributing
 
-**Dimitrios Zafeiropoulos**  
-[LinkedIn](https://linkedin.com/in/dimitris-zafeiropoulos) • dzaf96@gmail.com
+Feel free to open issues or submit pull requests. Contributions are welcome!
+
+---
+
+## 📜 License
+
+MIT License © 2025  
+Created by Dimitrios Zafeiropoulos
